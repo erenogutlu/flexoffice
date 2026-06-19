@@ -12,7 +12,7 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
 
-    public User creatUser(User user) {
+    public User createUser(User user) {
         if(userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("User with that email already exists");
         }

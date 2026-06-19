@@ -17,7 +17,7 @@ public class MeetingRoomService {
         return meetingRoomRepository.save(meetingRoom);
     }
 
-    public List<MeetingRoom> getAllMeetingRooms() {
+    public List<MeetingRoom> getActiveMeetingRooms() {
         return meetingRoomRepository.findByIsActiveTrue();
     }
 }

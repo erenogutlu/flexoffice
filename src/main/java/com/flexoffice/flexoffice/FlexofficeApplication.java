@@ -2,9 +2,11 @@ package com.flexoffice.flexoffice;
 
 import com.flexoffice.flexoffice.dto.UserDto;
 import com.flexoffice.flexoffice.entity.Desk;
+import com.flexoffice.flexoffice.entity.MeetingRoom;
 import com.flexoffice.flexoffice.entity.Role;
 import com.flexoffice.flexoffice.entity.User;
 import com.flexoffice.flexoffice.repository.DeskRepository;
+import com.flexoffice.flexoffice.repository.MeetingRoomRepository;
 import com.flexoffice.flexoffice.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -21,7 +23,7 @@ public class FlexofficeApplication {
     }
 
     @Bean
-    public CommandLineRunner initData(UserRepository userRepository, DeskRepository deskRepository) {
+    public CommandLineRunner initData(UserRepository userRepository, DeskRepository deskRepository, MeetingRoomRepository meetingRoomRepository) {
         return args -> {
             if(userRepository.count() == 0) {
                 User user = new User();
@@ -42,7 +44,26 @@ public class FlexofficeApplication {
                 desk2.setIsActive(true);
 
                 deskRepository.saveAll(List.of(desk, desk2));
-                System.out.println("Test User and Desk are created");
+            }
+            if(meetingRoomRepository.count() == 0) {
+
+                MeetingRoom meetingRoom = new MeetingRoom();
+                meetingRoom.setIsActive(true);
+                meetingRoom.setRoomName("Meeting Room 01");
+                meetingRoom.setHasProjector(true);
+                meetingRoom.setCapacity(10);
+                meetingRoomRepository.save(meetingRoom);
+
+                MeetingRoom meetingRoom2 = new MeetingRoom();
+                meetingRoom2.setIsActive(true);
+                meetingRoom2.setRoomName("Meeting Room 02");
+                meetingRoom2.setHasProjector(false);
+                meetingRoom2.setCapacity(10);
+
+                meetingRoomRepository.saveAll(List.of(meetingRoom, meetingRoom2));
+
+                System.out.println("Test User, Meeting Room and Desk are created");
+
             }
         };
     }

@@ -3,6 +3,7 @@ import './App.css'
 
 function App() {
     const [desks, setDesks] = useState([])
+    const [rooms, setRooms] = useState([])
     const [loading, setLoading] = useState(true)
     const [message, setMessage] = useState('')
 
@@ -12,6 +13,7 @@ function App() {
 
     useEffect(() => {
         fetchDesks()
+        fetchRooms()
     }, [])
 
     const fetchDesks = () => {
@@ -27,42 +29,74 @@ function App() {
             })
     }
 
-    const handleReserve = (deskId) => {
-        // Validation: Check if user selected both times
+    const fetchRooms = () => {
+        fetch('http://localhost:8080/api/rooms/active')
+            .then(res => res.json())
+            .then(data => {
+                setRooms(data)
+                setLoading(false)
+            })
+            .catch(err => {
+                console.error("API Error (Rooms):", err)
+                setLoading(false)
+            })
+    }
+
+    const validateTimes = () => {
         if (!startTime || !endTime) {
-            setMessage('⚠️ Warning: Please select both a Start Time and an End Time.')
-            return
+            setMessage('Warning: Please select both a Start Time and End Time')
+            return false
         }
-
-        // Validation: Check if End Time is actually AFTER Start Time
         if (new Date(startTime) >= new Date(endTime)) {
-            setMessage('⚠️ Warning: End Time must be strictly after Start Time.')
-            return
+            setMessage('Warning: End Time must be strictly after Start Time')
+            return false
         }
+        return true
+    }
+    const handleReserveDesk = (deskId) => {
+        if (!validateTimes()) return
 
-        // Append ':00' to match Java's expected LocalDateTime format (YYYY-MM-DDTHH:mm:ss)
-        const formattedStartTime = startTime + ':00'
-        const formattedEndTime = endTime + ':00'
+        const formattedStartTime = startTime.length === 16 ? startTime + ':00' : startTime;
+        const formattedEndTime = endTime.length === 16 ? endTime + ':00' : endTime;
 
-        const reservationPayload = {
-            user: { id: 1 },
-            reservedDesk: { id: deskId },
+        const payLoad = {
+            user: {id: 1},
+            reservedDesk: {id: deskId},
+            startTime: formattedStartTime,
+            endTime: formattedEndTime
+        }
+        sendReservationRequest('http://localhost:8080/api/reservations/desk', payLoad, 'Desk')
+    }
+
+    const handleReserveRoom = (roomId) => {
+        if (!validateTimes()) return
+
+        const formattedStartTime = startTime.length === 16 ? startTime + ':00' : startTime;
+        const formattedEndTime = endTime.length === 16 ? endTime + ':00' : endTime;
+
+        const payLoad = {
+            user: {id: 1},
+            reservedMeetingRoom: {id: roomId},
             startTime: formattedStartTime,
             endTime: formattedEndTime
         }
 
-        fetch('http://localhost:8080/api/reservations/desk', {
+        sendReservationRequest('http://localhost:8080/api/reservations/room', payLoad, 'Meeting Room')
+    }
+
+    const sendReservationRequest = (url, payload, type) => {
+        fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(reservationPayload)
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
         })
             .then(async response => {
                 if (response.ok) {
                     const data = await response.json()
-                    setMessage(`Success! Desk reserved successfully. Booking ID: ${data.id}`)
+                    setMessage(`Success! ${type} reserved successfully. Booking ID: ${data.id}`)
                 } else {
                     const errorText = await response.text()
-                    setMessage(`❌ Conflict Error: ${errorText || 'The desk is already reserved for this time.'}`)
+                    setMessage(`❌ Conflict Error: ${errorText || `The ${type.toLowerCase()} is already reserved for this time.`}`)
                 }
             })
             .catch(error => {
@@ -74,7 +108,7 @@ function App() {
     if (loading) return <h2>Loading Workspace Data...</h2>
 
     return (
-        <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto'}}>
             <h1>🏢 FlexOffice Workspace Dashboard</h1>
 
             {/* TIME-SLOT PICKER PANEL */}
@@ -88,21 +122,21 @@ function App() {
                 alignItems: 'center'
             }}>
                 <div>
-                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>🟢 Start Time:</label>
+                    <label style={{display: 'block', fontWeight: 'bold', marginBottom: '5px'}}>🟢 Start Time:</label>
                     <input
                         type="datetime-local"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
-                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
                     />
                 </div>
                 <div>
-                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>🔴 End Time:</label>
+                    <label style={{display: 'block', fontWeight: 'bold', marginBottom: '5px'}}>🔴 End Time:</label>
                     <input
                         type="datetime-local"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
-                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        style={{padding: '8px', borderRadius: '4px', border: '1px solid #ccc'}}
                     />
                 </div>
             </div>
@@ -120,9 +154,11 @@ function App() {
                     {message}
                 </div>
             )}
+            <hr style={{margin: '30px 0', border: '1px solid #ddd'}}/>
 
-            {/* DESK GRID */}
-            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            {/* DESKS SECTION */}
+            <h2 style={{color: '#0056b3'}}>💻 Available Desks</h2>
+            <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '40px'}}>
                 {desks.map((desk) => (
                     <div key={desk.id} style={{
                         border: '2px solid #007BFF',
@@ -132,11 +168,10 @@ function App() {
                         backgroundColor: '#fff',
                         boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
                     }}>
-                        <h2 style={{ color: '#333', margin: '0 0 10px 0' }}>{desk.deskCode}</h2>
-                        <p style={{ margin: '5px 0' }}>📍 <strong>Location:</strong> {desk.location}</p>
-                        <p style={{ margin: '5px 0', color: 'green' }}>✅ Status: Available</p>
+                        <h3 style={{margin: '0 0 10px 0'}}>{desk.deskCode}</h3>
+                        <p style={{margin: '5px 0'}}>📍 {desk.location}</p>
                         <button
-                            onClick={() => handleReserve(desk.id)}
+                            onClick={() => handleReserveDesk(desk.id)}
                             style={{
                                 marginTop: '15px',
                                 padding: '10px',
@@ -146,17 +181,48 @@ function App() {
                                 border: 'none',
                                 borderRadius: '5px',
                                 cursor: 'pointer',
-                                fontWeight: 'bold',
-                                transition: 'background 0.3s'
+                                fontWeight: 'bold'
                             }}
-                            onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
-                            onMouseOut={(e) => e.target.style.backgroundColor = '#007BFF'}
                         >
-                            Book Desk Now
+                            Book Desk
                         </button>
                     </div>
                 ))}
             </div>
+
+            {/* MEETING ROOMS SECTION */}
+            <h2 style={{color: '#6f42c1'}}>🤝 Meeting Rooms</h2>
+            <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap'}}>
+                {rooms.map((room) => (
+                    <div key={room.id} style={{
+                        border: '2px solid #6f42c1',
+                        borderRadius: '10px',
+                        padding: '20px',
+                        width: '250px',
+                        backgroundColor: '#fff',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                    }}>
+                        <h3 style={{margin: '0 0 10px 0'}}>{room.roomName || room.name || "Unknown Room"}</h3>                        <p style={{margin: '5px 0'}}>👥 Capacity: {room.capacity} people</p>
+                        <button
+                            onClick={() => handleReserveRoom(room.id)}
+                            style={{
+                                marginTop: '15px',
+                                padding: '10px',
+                                width: '100%',
+                                backgroundColor: '#6f42c1',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            Book Room
+                        </button>
+                    </div>
+                ))}
+            </div>
+
         </div>
     )
 }

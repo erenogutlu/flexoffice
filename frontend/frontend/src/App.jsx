@@ -4,6 +4,7 @@ import './App.css'
 function App() {
     const [desks, setDesks] = useState([])
     const [rooms, setRooms] = useState([])
+    const [reservations, setReservations] = useState([])
     const [loading, setLoading] = useState(true)
     const [message, setMessage] = useState('')
 
@@ -14,6 +15,7 @@ function App() {
     useEffect(() => {
         fetchDesks()
         fetchRooms()
+        fetchReservations()
     }, [])
 
     const fetchDesks = () => {
@@ -38,6 +40,19 @@ function App() {
             })
             .catch(err => {
                 console.error("API Error (Rooms):", err)
+                setLoading(false)
+            })
+    }
+
+    const fetchReservations = () => {
+        fetch('http://localhost:8080/api/reservations')
+            .then(res => res.json())
+            .then(data => {
+                setReservations(data)
+                setLoading(false)
+            })
+            .catch(err => {
+                console.error("API Error (Reservations):", err)
                 setLoading(false)
             })
     }
@@ -94,6 +109,8 @@ function App() {
                 if (response.ok) {
                     const data = await response.json()
                     setMessage(`Success! ${type} reserved successfully. Booking ID: ${data.id}`)
+
+                    fetchReservations()
                 } else {
                     const errorText = await response.text()
                     setMessage(`❌ Conflict Error: ${errorText || `The ${type.toLowerCase()} is already reserved for this time.`}`)
@@ -110,6 +127,37 @@ function App() {
     return (
         <div style={{padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto'}}>
             <h1>🏢 FlexOffice Workspace Dashboard</h1>
+
+            <div style={{ backgroundColor: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba' }}>
+                <h2 style={{ margin: '0 0 15px 0', color: '#856404' }}>📋 My Bookings</h2>
+                {reservations.length === 0 ? (
+                    <p style={{ color: '#856404', margin: 0 }}>You don't have any active reservations yet.</p>
+                ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white' }}>
+                        <thead>
+                        <tr style={{ backgroundColor: '#ffe8a1', textAlign: 'left' }}>
+                            <th style={{ padding: '10px', border: '1px solid #ddd' }}>ID</th>
+                            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Workspace</th>
+                            <th style={{ padding: '10px', border: '1px solid #ddd' }}>Start Time</th>
+                            <th style={{ padding: '10px', border: '1px solid #ddd' }}>End Time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {reservations.map((res) => (
+                            <tr key={res.id}>
+                                <td style={{ padding: '10px', border: '1px solid #ddd' }}>#{res.id}</td>
+                                <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                                    {/* Masa mı yoksa Oda mı olduğunu kontrol edip yazdırıyoruz */}
+                                    {res.reservedDesk ? `Desk: ${res.reservedDesk.deskCode}` : res.reservedMeetingRoom ? `Room: ${res.reservedMeetingRoom.roomName || res.reservedMeetingRoom.name}` : 'Unknown'}
+                                </td>
+                                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{new Date(res.startTime).toLocaleString()}</td>
+                                <td style={{ padding: '10px', border: '1px solid #ddd' }}>{new Date(res.endTime).toLocaleString()}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
 
             {/* TIME-SLOT PICKER PANEL */}
             <div style={{

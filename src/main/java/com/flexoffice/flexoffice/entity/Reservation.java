@@ -1,5 +1,7 @@
 package com.flexoffice.flexoffice.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,13 +24,17 @@ public class Reservation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User reservedUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="meeting_room_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private MeetingRoom reservedMeetingRoom;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="desk_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Desk reservedDesk;
+
 }

@@ -16,6 +16,11 @@ import java.util.List;
 public class ReservationController {
     private final ReservationService reservationService;
 
+    @GetMapping
+    public ResponseEntity<List<Reservation>> getAllReservations() {
+        return ResponseEntity.ok(reservationService.getAllReservations());
+    }
+
     @PostMapping("/desk")
     public ResponseEntity<Reservation> createDeskReservation(@RequestBody Reservation reservation) {
         Reservation createdReservation = reservationService.createDeskReservation(reservation);
@@ -24,12 +29,8 @@ public class ReservationController {
 
     @PostMapping("/room")
     public ResponseEntity<Reservation> createRoomReservation(@RequestBody Reservation reservation) {
-        Reservation createdReservation = reservationService.createDeskReservation(reservation);
+        Reservation createdReservation = reservationService.createMeetingRoomReservation(reservation);
         return ResponseEntity.ok(createdReservation);
     }
 
-    @GetMapping("/api/reservations")
-    public ResponseEntity<List<Reservation>> getAllReservations() {
-        return ResponseEntity.ok(reservationService.getAllReservations());
-    }
 }

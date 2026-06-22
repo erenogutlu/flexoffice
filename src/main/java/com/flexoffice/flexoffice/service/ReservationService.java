@@ -42,4 +42,11 @@ public class ReservationService {
     public List<Reservation> getAllReservations() {
         return reservationRepository.findAll();
     }
+
+    public void cancelReservation(Long reservationId) {
+        reservationRepository.deleteById(reservationId);
+    }
+    public void deleteAllReservations() {
+        reservationRepository.deleteAll();
+    }
 }

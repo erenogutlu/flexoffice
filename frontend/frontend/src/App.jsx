@@ -122,14 +122,58 @@ function App() {
             })
     }
 
-    if (loading) return <h2>Loading Workspace Data...</h2>
+    const handleCancelReservation = (reservationId) => {
+        fetch(`http://localhost:8080/api/reservations/${reservationId}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (response.ok) {
+                    setMessage(`🗑️ Reservation #${reservationId} cancelled successfully.`);
+                    fetchReservations();
+                } else {
+                    setMessage('❌ Error: Could not cancel the reservation.');
+                }
+            })
+            .catch(error => console.error('Cancel Error:', error));
+    }
 
+    const handleDeleteAllReservations = () => {
+        if (!window.confirm("Are you sure you want to delete ALL reservations? This cannot be undone!")) return;
+
+        fetch('http://localhost:8080/api/reservations', {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (response.ok) {
+                    setMessage('💥 All reservations have been deleted successfully.');
+                    fetchReservations(); // Tabloyu anında temizle
+                } else {
+                    setMessage('❌ Error: Could not delete all reservations.');
+                }
+            })
+            .catch(error => console.error('Delete All Error:', error));
+    }
+
+    if (loading) return <h2>Loading Workspace Data...</h2>
     return (
         <div style={{padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto'}}>
             <h1>🏢 FlexOffice Workspace Dashboard</h1>
 
+            {/* MY BOOKINGS PANEL */}
             <div style={{ backgroundColor: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba' }}>
-                <h2 style={{ margin: '0 0 15px 0', color: '#856404' }}>📋 My Bookings</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <h2 style={{ margin: 0, color: '#856404' }}>📋 My Bookings</h2>
+
+                    {reservations.length > 0 && (
+                        <button
+                            onClick={handleDeleteAllReservations}
+                            style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                            ⚠️ Delete All
+                        </button>
+                    )}
+                </div>
+
                 {reservations.length === 0 ? (
                     <p style={{ color: '#856404', margin: 0 }}>You don't have any active reservations yet.</p>
                 ) : (
@@ -140,6 +184,7 @@ function App() {
                             <th style={{ padding: '10px', border: '1px solid #ddd' }}>Workspace</th>
                             <th style={{ padding: '10px', border: '1px solid #ddd' }}>Start Time</th>
                             <th style={{ padding: '10px', border: '1px solid #ddd' }}>End Time</th>
+                            <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>Action</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -147,11 +192,18 @@ function App() {
                             <tr key={res.id}>
                                 <td style={{ padding: '10px', border: '1px solid #ddd' }}>#{res.id}</td>
                                 <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                                    {/* Masa mı yoksa Oda mı olduğunu kontrol edip yazdırıyoruz */}
                                     {res.reservedDesk ? `Desk: ${res.reservedDesk.deskCode}` : res.reservedMeetingRoom ? `Room: ${res.reservedMeetingRoom.roomName || res.reservedMeetingRoom.name}` : 'Unknown'}
                                 </td>
                                 <td style={{ padding: '10px', border: '1px solid #ddd' }}>{new Date(res.startTime).toLocaleString()}</td>
                                 <td style={{ padding: '10px', border: '1px solid #ddd' }}>{new Date(res.endTime).toLocaleString()}</td>
+                                <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                    <button
+                                        onClick={() => handleCancelReservation(res.id)}
+                                        style={{ backgroundColor: '#ffc107', color: 'black', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                         </tbody>

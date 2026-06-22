@@ -33,4 +33,15 @@ public class ReservationController {
         return ResponseEntity.ok(createdReservation);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> cancelReservation(@PathVariable Long id) {
+        reservationService.cancelReservation(id);
+        return ResponseEntity.ok("Reservation cancelled succesfully.");
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<String> deleteReservation() {
+        reservationService.deleteAllReservations();
+        return ResponseEntity.ok("All Reservations cancelled succesfully");
+    }
 }

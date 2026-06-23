@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Auth from './Auth'
 import './App.css'
 
 function App() {
@@ -7,6 +8,7 @@ function App() {
     const [reservations, setReservations] = useState([])
     const [loading, setLoading] = useState(true)
     const [message, setMessage] = useState('')
+    const [user, setUser] = useState(null)
 
     // New State variables for the Time-Slot Picker
     const [startTime, setStartTime] = useState('')
@@ -155,15 +157,23 @@ function App() {
     }
 
     if (loading) return <h2>Loading Workspace Data...</h2>
+
+    if (!user){
+        return <Auth onLogin={setUser} />
+    }
     return (
         <div style={{padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto'}}>
             <h1>🏢 FlexOffice Workspace Dashboard</h1>
+
+            <div>
+                <span style={{ marginRight: '15px', fontWeight: 'bold' }}>👋 Welcome, {user.firstName}!</span>
+                <button onClick={() => setUser(null)} style={{ padding: '5px 10px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Logout</button>
+            </div>
 
             {/* MY BOOKINGS PANEL */}
             <div style={{ backgroundColor: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                     <h2 style={{ margin: 0, color: '#856404' }}>📋 My Bookings</h2>
-
                     {reservations.length > 0 && (
                         <button
                             onClick={handleDeleteAllReservations}
